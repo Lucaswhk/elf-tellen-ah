@@ -60,8 +60,8 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:18px 4px}
 <body>
 <main>
 <header>
-  <h1>ELF Kwartaal telling</h1>
-  <div class="sub">Voer de ELF Kwartaal telling uit</div>
+  <h1>Kratten teller</h1>
+  <div class="sub">Houd verschillende soorten en formaten apart bij</div>
   <div class="totalbox"><div><div class="total-label">TOTAAL AANTAL KRATTEN</div><div class="total" id="total">0</div></div><div class="total-unit">kratten</div></div>
 </header>
 <div class="toolbar">
@@ -98,9 +98,17 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:18px 4px}
  ];
  let items=[],editing=null;
  const $=id=>document.getElementById(id);
+ let activeHold=null;
+ function stopActiveHold(){if(!activeHold)return;clearTimeout(activeHold.startTimer);clearInterval(activeHold.repeatTimer);if(activeHold.held)activeHold.button.dataset.skipNextClick='1';activeHold=null}
+ window.addEventListener('pointerup',stopActiveHold);
+ window.addEventListener('pointercancel',stopActiveHold);
  const safeLoad=()=>{try{const saved=localStorage.getItem(KEY);if(saved===null){items=DEFAULT_ITEMS.map((name,index)=>({id:'default-'+index,name,count:0}));return}const d=JSON.parse(saved);items=Array.isArray(d.items)?d.items:[];$('step').value=d.step||1}catch(e){items=[]}};
  const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify({items,step:$('step').value}))}catch(e){}};
  const fmt=n=>Number(n||0).toLocaleString('nl-NL');
+ function bindHold(button,action){
+  button.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;stopActiveHold();const hold={button,action,held:false,startTimer:null,repeatTimer:null};activeHold=hold;hold.startTimer=setTimeout(()=>{if(activeHold!==hold)return;hold.held=true;action();hold.repeatTimer=setInterval(()=>{if(activeHold===hold)action()},100)},400)});
+  button.addEventListener('click',e=>{if(button.dataset.skipNextClick){delete button.dataset.skipNextClick;e.preventDefault();e.stopImmediatePropagation()}else action()});
+ }
  function render(){
   $('total').textContent=fmt(items.reduce((s,x)=>s+x.count,0));
   const list=$('list');list.innerHTML='';
@@ -112,8 +120,8 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:18px 4px}
    const count=document.createElement('div');count.className='count';count.textContent=fmt(item.count);
    left.append(nm,count);
    const actions=document.createElement('div');actions.className='item-actions';
-   const minus=document.createElement('button');minus.className='minus';minus.textContent='−';minus.setAttribute('aria-label','Eén eraf');minus.onclick=()=>change(item.id,-1);
-   const plus=document.createElement('button');plus.className='add';plus.textContent='+'+(Number($('step').value)>1?fmt(Number($('step').value)):'');plus.setAttribute('aria-label','Aantal toevoegen');plus.onclick=()=>change(item.id,Math.max(1,parseInt($('step').value)||1));
+   const minus=document.createElement('button');minus.className='minus';minus.textContent='−';minus.setAttribute('aria-label','Eén eraf');bindHold(minus,()=>change(item.id,-1));
+   const plus=document.createElement('button');plus.className='add';plus.textContent='+'+(Number($('step').value)>1?fmt(Number($('step').value)):'');plus.setAttribute('aria-label','Aantal toevoegen');bindHold(plus,()=>change(item.id,Math.max(1,parseInt($('step').value)||1)));
    actions.append(minus,plus);
    const bottom=document.createElement('div');bottom.className='item-bottom';
    const custom=document.createElement('input');custom.type='number';custom.min='1';custom.step='1';custom.placeholder='Aantal';custom.inputMode='numeric';custom.setAttribute('aria-label','Zelf aantal invullen');
