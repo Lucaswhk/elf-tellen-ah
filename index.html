@@ -89,9 +89,16 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:18px 4px}
 <script>
 (()=>{
  const KEY='kratTeller_v1';
+ const DEFAULT_ITEMS=[
+  'CBL 7','CBL 8','CBL 11','CBL 15','CBL 17','CBL 23',
+  'Grijze deksel','Enkele rolly','Dubbele rolly','CC-container',
+  'Groen 104','Groen 106','Groen 136','Groen 154','Groen 156',
+  'Groen 186','Groen 206','Groen 216','Groen 246','Groen 24603',
+  'Coca-Cola deksels'
+ ];
  let items=[],editing=null;
  const $=id=>document.getElementById(id);
- const safeLoad=()=>{try{const d=JSON.parse(localStorage.getItem(KEY)||'{}');items=Array.isArray(d.items)?d.items:[];$('step').value=d.step||1}catch(e){items=[]}};
+ const safeLoad=()=>{try{const saved=localStorage.getItem(KEY);if(saved===null){items=DEFAULT_ITEMS.map((name,index)=>({id:'default-'+index,name,count:0}));return}const d=JSON.parse(saved);items=Array.isArray(d.items)?d.items:[];$('step').value=d.step||1}catch(e){items=[]}};
  const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify({items,step:$('step').value}))}catch(e){}};
  const fmt=n=>Number(n||0).toLocaleString('nl-NL');
  function render(){
