@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#123b32">
+<title>Kratten teller</title>
+<style>
+:root{color-scheme:light;--green:#176b50;--dark:#123b32;--bg:#f3f6f4;--line:#e1e8e3;--muted:#66756d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#17231d;padding:env(safe-area-inset-top) 14px calc(24px + env(safe-area-inset-bottom))}
+main{max-width:680px;margin:0 auto}
+header{background:var(--dark);color:white;margin:0 -14px 16px;padding:24px 20px 22px;border-radius:0 0 22px 22px}
+h1{font-size:25px;margin:0 0 5px}
+.sub{color:#c7d9d0;font-size:14px}
+.totalbox{display:flex;align-items:end;justify-content:space-between;margin-top:20px}
+.total-label{font-size:13px;color:#c7d9d0}
+.total{font-size:38px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+.total-unit{font-size:13px;color:#c7d9d0;margin-bottom:5px}
+.toolbar{display:flex;gap:8px;margin:14px 0}
+button{font:inherit;cursor:pointer;border:0}
+.primary{background:var(--green);color:#fff;border-radius:12px;padding:13px 16px;font-weight:700}
+.secondary{background:#e5ede8;color:var(--dark);border-radius:12px;padding:12px 14px;font-weight:650}
+.toolbar .primary{flex:1}
+.settings{background:white;border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px}
+.settings label{font-size:13px;font-weight:700;display:block;margin-bottom:7px}
+.step-row{display:flex;gap:8px;align-items:center}
+input{font:inherit;min-width:0;border:1px solid #d5dfd8;border-radius:10px;padding:11px;background:white}
+#step{width:100px;font-weight:700}
+.hint{font-size:12px;color:var(--muted);margin-top:7px}
+#list{display:flex;flex-direction:column;gap:10px}
+.item{background:white;border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}
+.name{font-weight:750;font-size:16px;overflow-wrap:anywhere}
+.count{font-size:25px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:4px}
+.item-actions{display:flex;gap:7px;align-items:center}
+.add{background:var(--green);color:white;border-radius:12px;min-width:58px;height:54px;font-size:22px;font-weight:800}
+.minus{background:#edf1ee;color:#33443a;border-radius:12px;width:42px;height:44px;font-size:21px}
+.more{background:#edf1ee;color:#33443a;border-radius:10px;width:36px;height:36px;font-size:20px}
+.item-bottom{grid-column:1/-1;display:flex;gap:8px;align-items:center;border-top:1px solid #eef2ef;padding-top:10px}
+.item-bottom input{width:88px;padding:9px}
+.item-bottom button{padding:9px 12px;border-radius:10px;background:#e5ede8;color:var(--dark);font-weight:700}
+.item-bottom .edit{margin-left:auto;background:transparent;color:#52645a}
+.empty{text-align:center;padding:32px 16px;color:var(--muted);background:white;border:1px dashed #cbd8cf;border-radius:16px}
+.modalback{position:fixed;inset:0;background:#0007;display:none;align-items:flex-end;justify-content:center;padding:14px;z-index:5}
+.modalback.show{display:flex}
+.modal{background:white;border-radius:20px;padding:20px;width:100%;max-width:500px}
+.modal h2{font-size:19px;margin:0 0 14px}
+.modal input{width:100%;margin-bottom:10px}
+.modalbuttons{display:flex;gap:8px}
+.modalbuttons button{flex:1}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:18px 4px}
+@media(min-width:560px){header{margin-top:18px;border-radius:22px}.modalback{align-items:center}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Kratten teller</h1>
+  <div class="sub">Houd verschillende soorten en formaten apart bij</div>
+  <div class="totalbox"><div><div class="total-label">TOTAAL AANTAL KRATTEN</div><div class="total" id="total">0</div></div><div class="total-unit">kratten</div></div>
+</header>
+<div class="toolbar">
+  <button class="primary" id="newBtn">＋ Teller toevoegen</button>
+  <button class="secondary" id="exportBtn">Exporteren</button>
+</div>
+<section class="settings">
+  <label for="step">Standaard aantal per tik op +</label>
+  <div class="step-row"><input id="step" type="number" min="1" step="1" value="1"><span>kratten per keer</span></div>
+  <div class="hint">Je kunt bij iedere teller ook een ander aantal in één keer toevoegen.</div>
+</section>
+<section id="list"></section>
+<footer>Je telling wordt automatisch bewaard op dit apparaat in deze browser.</footer>
+</main>
+<div class="modalback" id="modalback">
+ <div class="modal">
+  <h2 id="modalTitle">Nieuwe teller</h2>
+  <input id="crateName" maxlength="60" placeholder="Naam, bijvoorbeeld Blauwe krat – groot">
+  <div class="modalbuttons">
+   <button class="secondary" id="cancelBtn">Annuleren</button>
+   <button class="primary" id="saveBtn">Opslaan</button>
+  </div>
+ </div>
+</div>
+<script>
+(()=>{
+ const KEY='kratTeller_v1';
+ let items=[],editing=null;
+ const $=id=>document.getElementById(id);
+ const safeLoad=()=>{try{const d=JSON.parse(localStorage.getItem(KEY)||'{}');items=Array.isArray(d.items)?d.items:[];$('step').value=d.step||1}catch(e){items=[]}};
+ const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify({items,step:$('step').value}))}catch(e){}};
+ const fmt=n=>Number(n||0).toLocaleString('nl-NL');
+ function render(){
+  $('total').textContent=fmt(items.reduce((s,x)=>s+x.count,0));
+  const list=$('list');list.innerHTML='';
+  if(!items.length){list.innerHTML='<div class="empty">Nog geen tellers.<br>Voeg je eerste kratsoort toe met de knop hierboven.</div>';return}
+  items.forEach(item=>{
+   const el=document.createElement('article');el.className='item';
+   const left=document.createElement('div');
+   const nm=document.createElement('div');nm.className='name';nm.textContent=item.name;
+   const count=document.createElement('div');count.className='count';count.textContent=fmt(item.count);
+   left.append(nm,count);
+   const actions=document.createElement('div');actions.className='item-actions';
+   const minus=document.createElement('button');minus.className='minus';minus.textContent='−';minus.setAttribute('aria-label','Eén eraf');minus.onclick=()=>change(item.id,-1);
+   const plus=document.createElement('button');plus.className='add';plus.textContent='+'+(Number($('step').value)>1?fmt(Number($('step').value)):'');plus.setAttribute('aria-label','Aantal toevoegen');plus.onclick=()=>change(item.id,Math.max(1,parseInt($('step').value)||1));
+   actions.append(minus,plus);
+   const bottom=document.createElement('div');bottom.className='item-bottom';
+   const custom=document.createElement('input');custom.type='number';custom.min='1';custom.step='1';custom.placeholder='Aantal';custom.inputMode='numeric';custom.setAttribute('aria-label','Zelf aantal invullen');
+   const addCustom=document.createElement('button');addCustom.textContent='Tel erbij';addCustom.onclick=()=>{const n=parseInt(custom.value,10);if(Number.isInteger(n)&&n>0){change(item.id,n);custom.value=''}else custom.focus()};
+   const edit=document.createElement('button');edit.className='edit';edit.textContent='Bewerken';edit.onclick=()=>openModal(item.id);
+   const del=document.createElement('button');del.className='edit';del.textContent='Verwijderen';del.onclick=()=>{if(confirm('Deze teller verwijderen?')){items=items.filter(x=>x.id!==item.id);persist();render()}};
+   bottom.append(custom,addCustom,edit,del);
+   el.append(left,actions,bottom);list.append(el);
+  });
+ }
+ function change(id,delta){const it=items.find(x=>x.id===id);if(!it)return;it.count=Math.max(0,it.count+delta);persist();render()}
+ function openModal(id=null){editing=id;const it=items.find(x=>x.id===id);$('modalTitle').textContent=it?'Teller bewerken':'Nieuwe teller';$('crateName').value=it?it.name:'';$('modalback').classList.add('show');setTimeout(()=>$('crateName').focus(),50)}
+ $('newBtn').onclick=()=>openModal();
+ $('cancelBtn').onclick=()=>$('modalback').classList.remove('show');
+ $('modalback').onclick=e=>{if(e.target===$('modalback'))$('modalback').classList.remove('show')};
+ $('saveBtn').onclick=()=>{const name=$('crateName').value.trim();if(!name){$('crateName').focus();return}if(editing){const it=items.find(x=>x.id===editing);if(it)it.name=name}else items.push({id:Date.now().toString()+Math.random().toString(16).slice(2),name,count:0});persist();render();$('modalback').classList.remove('show')};
+ $('crateName').addEventListener('keydown',e=>{if(e.key==='Enter')$('saveBtn').click()});
+ $('step').addEventListener('change',()=>{let n=parseInt($('step').value,10);if(!Number.isInteger(n)||n<1)n=1;$('step').value=n;persist();render()});
+ $('exportBtn').onclick=()=>{const rows=[['Kratsoort','Aantal'],...items.map(x=>[x.name,x.count]),['TOTAAL',items.reduce((s,x)=>s+x.count,0)]];const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='krattentelling.csv';a.click();URL.revokeObjectURL(url)};
+ safeLoad();render();
+})();
+</script>
+</body>
+</html>
