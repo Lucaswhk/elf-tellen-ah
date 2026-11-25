@@ -4,20 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#123b32">
-<title>ELF Teller AH</title>
+<title>ELF Tellen</title>
 <style>
-:root{color-scheme:light;--green:#176b50;--dark:#123b32;--bg:#f3f6f4;--line:#e1e8e3;--muted:#66756d}
+:root{color-scheme:light;--green:#176b50;--dark:#123b32;--bg:#f4f7f5;--line:#e3eae5;--muted:#66756d;--danger:#a33d3d}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#17231d;padding:env(safe-area-inset-top) 14px calc(24px + env(safe-area-inset-bottom))}
+body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#17231d;padding:env(safe-area-inset-top) 14px calc(24px + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased}
 main{max-width:680px;margin:0 auto}
-header{background:var(--dark);color:white;margin:0 -14px 16px;padding:24px 20px 22px;border-radius:0 0 22px 22px}
-h1{font-size:25px;margin:0 0 5px}
+header{background:var(--dark);color:white;margin:0 -14px 18px;padding:24px 20px 22px;border-radius:0 0 22px 22px;box-shadow:0 8px 22px #123b321a}
+h1{font-size:27px;margin:0 0 5px;letter-spacing:-.35px}
 .sub{color:#c7d9d0;font-size:14px}
-.totalbox{display:flex;align-items:end;justify-content:space-between;margin-top:20px}
 .total-label{font-size:13px;color:#c7d9d0}
-.total{font-size:38px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
-.total-unit{font-size:13px;color:#c7d9d0;margin-bottom:5px}
-.toolbar{display:flex;gap:8px;margin:14px 0}
+.control-panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;margin:14px 0;box-shadow:0 2px 7px #17231d08}
+.toolbar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 13px}
 button{
   font:inherit;
   cursor:pointer;
@@ -26,32 +24,56 @@ button{
   user-select:none;
   -webkit-user-select:none;
 }
-.primary{background:var(--green);color:#fff;border-radius:12px;padding:13px 16px;font-weight:700}
-.secondary{background:#e5ede8;color:var(--dark);border-radius:12px;padding:12px 14px;font-weight:650}
-.toolbar .primary{flex:1}
-.settings{background:white;border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px}
-.settings label{font-size:13px;font-weight:700;display:block;margin-bottom:7px}
+.primary{background:var(--green);color:#fff;border-radius:11px;padding:11px 6px;font-weight:750;box-shadow:0 2px 5px #176b5022}
+.secondary{background:#e9efeb;color:var(--dark);border-radius:11px;padding:11px 6px;font-weight:700}
+.toolbar button{min-height:44px;font-size:13px;line-height:1.15}
+.reset{background:#fff1f0;color:var(--danger);border:1px solid #f1d7d5;border-radius:11px;padding:10px 6px;font-size:13px;font-weight:750}
+.settings{padding:0}
+.settings label{font-size:13px;font-weight:750;display:block;margin-bottom:7px}
 .step-row{display:flex;gap:8px;align-items:center}
 input{font:inherit;min-width:0;border:1px solid #d5dfd8;border-radius:10px;padding:11px;background:white}
-#step{width:100px;font-weight:700}
+#step{width:90px;font-weight:700}
 .hint{font-size:12px;color:var(--muted);margin-top:7px}
-#list{display:flex;flex-direction:column;gap:10px}
-.item{background:white;border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}
-.name{font-weight:750;font-size:16px;overflow-wrap:anywhere}
+.checklist-panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin:0 0 14px;box-shadow:0 3px 9px #17231d0a}
+.checklist-panel[hidden]{display:none}
+.checklist-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.checklist-heading{display:flex;align-items:baseline;gap:10px}
+.checklist-head strong{font-size:16px}
+.checklist-close{background:#e9efeb;color:var(--dark);border-radius:9px;padding:8px 10px;font-size:12px;font-weight:700}
+.checklist-items{list-style:none;margin:0;padding:0}
+.checklist-items li+li{border-top:1px solid #edf1ee}
+.check-row{display:flex;align-items:center;gap:11px;min-height:45px;cursor:pointer}
+.check-row input{width:19px;height:19px;margin:0;accent-color:var(--green);flex:none}
+.check-label{font-size:15px;font-weight:650;line-height:1.3}
+.check-row input:checked+.check-label{text-decoration:line-through;color:#87958c}
+#list{display:flex;flex-direction:column;gap:9px}
+.item{background:white;border:1px solid var(--line);border-radius:16px;padding:14px 13px 13px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;box-shadow:0 3px 9px #17231d0a}
+.title-row{grid-column:1/-1;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;min-width:0}
+.title-info{min-width:0;flex:1}
+.name-code{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;min-width:0}
+.name{font-weight:850;font-size:18px;color:#17231d;overflow-wrap:anywhere;line-height:1.25;letter-spacing:-.2px}
+.nas-number,.nas-missing{font-size:12px;font-weight:650;color:var(--muted);white-space:normal}
+.nas-missing{color:#87958c;font-weight:550}
+.last-activity{display:block;margin-top:5px;font-size:12px;font-weight:650;color:#496357;line-height:1.35}
 .count{font-size:25px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:4px}
 .item-actions{display:flex;gap:7px;align-items:center}
+.custom-add{background:#e5ede8;color:var(--dark);border-radius:11px;min-width:44px;height:44px;font-size:14px;font-weight:800}
 .add{background:var(--green);color:white;border-radius:12px;min-width:58px;height:54px;font-size:22px;font-weight:800}
 .minus{background:#edf1ee;color:#33443a;border-radius:12px;width:42px;height:44px;font-size:21px}
-.more{background:#edf1ee;color:#33443a;border-radius:10px;width:36px;height:36px;font-size:20px}
-.item-bottom{grid-column:1/-1;display:flex;gap:8px;align-items:center;border-top:1px solid #eef2ef;padding-top:10px}
-.item-bottom input{width:88px;padding:9px}
-.item-bottom button{padding:9px 12px;border-radius:10px;background:#e5ede8;color:var(--dark);font-weight:700}
-.item-bottom .edit{margin-left:auto;background:transparent;color:#52645a}
+.menu{position:relative;flex:none;margin-top:-2px}
+.menu summary{list-style:none;display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#f0f4f1;color:#43554a;font-size:22px;font-weight:700;line-height:1;cursor:pointer;user-select:none;-webkit-user-select:none}
+.menu summary::-webkit-details-marker{display:none}
+.menu[open] summary{background:#e5ede8}
+.menu-options{position:absolute;right:0;top:39px;z-index:2;min-width:145px;padding:5px;background:white;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px #17231d20}
+.menu-options button{display:block;width:100%;padding:10px 11px;border-radius:8px;background:white;text-align:left;color:#26372d;font-weight:650}
+.menu-options button:hover{background:#f2f6f3}
+.menu-options .delete{color:var(--danger)}
 .empty{text-align:center;padding:32px 16px;color:var(--muted);background:white;border:1px dashed #cbd8cf;border-radius:16px}
 .modalback{position:fixed;inset:0;background:#0007;display:none;align-items:flex-end;justify-content:center;padding:14px;z-index:5}
 .modalback.show{display:flex}
 .modal{background:white;border-radius:20px;padding:20px;width:100%;max-width:500px}
 .modal h2{font-size:19px;margin:0 0 14px}
+.modal label{display:block;font-size:13px;font-weight:700;margin:0 0 6px}
 .modal input{width:100%;margin-bottom:10px}
 .modalbuttons{display:flex;gap:8px}
 .modalbuttons button{flex:1}
@@ -62,18 +84,25 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:18px 4px}
 <body>
 <main>
 <header>
-  <h1>Kratten teller</h1>
-  <div class="sub">Houd verschillende soorten en formaten apart bij</div>
-  <div class="totalbox"><div><div class="total-label">TOTAAL AANTAL KRATTEN</div><div class="total" id="total">0</div></div><div class="total-unit">kratten</div></div>
+  <h1>ELF Tellen</h1>
+  <div class="sub">Voer gemakkelijk de ELF Kwartaal telling uit</div>
 </header>
+<section class="control-panel">
 <div class="toolbar">
   <button class="primary" id="newBtn">＋ Teller toevoegen</button>
   <button class="secondary" id="exportBtn">Exporteren</button>
+  <button class="reset" id="resetBtn">Reset</button>
+  <button class="secondary" id="checklistBtn" aria-expanded="false" aria-controls="checklistPanel">Checklist</button>
 </div>
 <section class="settings">
   <label for="step">Standaard aantal per tik op +</label>
   <div class="step-row"><input id="step" type="number" min="1" step="1" value="1"><span>kratten per keer</span></div>
   <div class="hint">Je kunt bij iedere teller ook een ander aantal in één keer toevoegen.</div>
+</section>
+</section>
+<section class="checklist-panel" id="checklistPanel" hidden aria-label="Checklist">
+ <div class="checklist-head"><div class="checklist-heading"><strong>Checklist</strong><span class="nas-number" id="checklistProgress">0/6</span></div><button type="button" class="checklist-close" id="closeChecklistBtn">Sluiten</button></div>
+ <ul class="checklist-items" id="checklistItems"></ul>
 </section>
 <section id="list"></section>
 <footer>Je telling wordt automatisch bewaard op dit apparaat in deze browser.</footer>
@@ -81,7 +110,10 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:18px 4px}
 <div class="modalback" id="modalback">
  <div class="modal">
   <h2 id="modalTitle">Nieuwe teller</h2>
+  <label for="crateName">Naam</label>
   <input id="crateName" maxlength="60" placeholder="Naam, bijvoorbeeld Blauwe krat – groot">
+  <label for="crateNumber">NASA-nummer</label>
+  <input id="crateNumber" inputmode="numeric" maxlength="30" placeholder="Bijvoorbeeld 123456">
   <div class="modalbuttons">
    <button class="secondary" id="cancelBtn">Annuleren</button>
    <button class="primary" id="saveBtn">Opslaan</button>
@@ -92,58 +124,94 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:18px 4px}
 (()=>{
  const KEY='kratTeller_v1';
  const DEFAULT_ITEMS=[
-  'CBL 7','CBL 8','CBL 11','CBL 15','CBL 17','CBL 23',
-  'Grijze deksel','Enkele rolly','Dubbele rolly','CC-container',
-  'Groen 104','Groen 106','Groen 136','Groen 154','Groen 156',
-  'Groen 186','Groen 206','Groen 216','Groen 246','Groen 24603',
-  'Coca-Cola deksels'
+  {name:'CBL Fust 23',code:'508305'},
+  {name:'CBL Fust 17',code:'508304'},
+  {name:'CBL Fust 11',code:'508293'},
+  {name:'CBL Fust 7',code:'508291'},
+  {name:'CBL Fust 15',code:'508306'},
+  {name:'CBL Fust 8',code:'568009'},
+  {name:'CBL Grijze deksel',code:'526672'},
+  {name:'CC-Dolly (Enkele rolly)',code:'532441'},
+  {name:'CC-Rolly (Dubbele rolly)',code:'532443'},
+  {name:'CC-Rolcontainer',code:'532451'},
+  {name:'EPS Klapkrat 104',code:'693659'},
+  {name:'EPS Klapkrat 106',code:'686761'},
+  {name:'EPS Klapkrat 136',code:'662375'},
+  {name:'EPS Klapkrat 154',code:'662374'},
+  {name:'EPS Klapkrat 156',code:'662373'},
+  {name:'EPS Klapkrat 186',code:'662372'},
+  {name:'EPS Klapkrat 216',code:'662371'},
+  {name:'EPS Klapkrat 24603',code:'680717'},
+  {name:'Blauwe boodschappenkrat verkoop',code:'703998'},
+  {name:'Blauwe boodschappenkrat leeggoed',code:'103009'},
+  {name:'CC-Deense kar (bloemenkar)',code:'891161'},
+  {name:'Melkric',code:'551365'},
+  {name:'Proteus RAD',code:'711526'},
+  {name:'Seizoensmolen',code:'583188'}
  ];
+ const CHECKLIST_ITEMS=['AGF Afdeling','Sinaasappelpers','Veilingkisten','Kantine','Kantoren','Kledingkasten'];
+ let checklistState=CHECKLIST_ITEMS.map(()=>false);
  let items=[],editing=null;
  const $=id=>document.getElementById(id);
  let activeHold=null;
  function stopActiveHold(){if(!activeHold)return;clearTimeout(activeHold.startTimer);clearInterval(activeHold.repeatTimer);if(activeHold.held)activeHold.button.dataset.skipNextClick='1';activeHold=null}
  window.addEventListener('pointerup',stopActiveHold);
  window.addEventListener('pointercancel',stopActiveHold);
- const safeLoad=()=>{try{const saved=localStorage.getItem(KEY);if(saved===null){items=DEFAULT_ITEMS.map((name,index)=>({id:'default-'+index,name,count:0}));return}const d=JSON.parse(saved);items=Array.isArray(d.items)?d.items:[];$('step').value=d.step||1}catch(e){items=[]}};
- const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify({items,step:$('step').value}))}catch(e){}};
+ const safeLoad=()=>{try{const saved=localStorage.getItem(KEY);if(saved===null){items=DEFAULT_ITEMS.map((item,index)=>({id:'default-'+index,name:item.name,code:item.code,count:0}));return}const d=JSON.parse(saved);items=Array.isArray(d.items)?d.items:[];$('step').value=d.step||1;if(Array.isArray(d.checklist))checklistState=CHECKLIST_ITEMS.map((_,index)=>Boolean(d.checklist[index]))}catch(e){items=[]}};
+ const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify({items,step:$('step').value,checklist:checklistState}))}catch(e){}};
  const fmt=n=>Number(n||0).toLocaleString('nl-NL');
+ const formatAgo=time=>{const seconds=Math.max(0,Math.floor((Date.now()-Number(time))/1000));if(seconds<60)return seconds+' sec geleden';const minutes=Math.floor(seconds/60);if(minutes<60)return minutes+' min geleden';const hours=Math.floor(minutes/60);if(hours<24)return hours+' uur geleden';return Math.floor(hours/24)+' dagen geleden'};
+ const activityText=(delta,time)=>'Laatste telling: '+(Number(delta)>0?'+':'')+fmt(delta)+' · '+formatAgo(time);
  function bindHold(button,action){
   button.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;stopActiveHold();const hold={button,action,held:false,startTimer:null,repeatTimer:null};activeHold=hold;hold.startTimer=setTimeout(()=>{if(activeHold!==hold)return;hold.held=true;action();hold.repeatTimer=setInterval(()=>{if(activeHold===hold)action()},100)},400)});
   button.addEventListener('click',e=>{if(button.dataset.skipNextClick){delete button.dataset.skipNextClick;e.preventDefault();e.stopImmediatePropagation()}else action()});
  }
  function render(){
-  $('total').textContent=fmt(items.reduce((s,x)=>s+x.count,0));
   const list=$('list');list.innerHTML='';
   if(!items.length){list.innerHTML='<div class="empty">Nog geen tellers.<br>Voeg je eerste kratsoort toe met de knop hierboven.</div>';return}
   items.forEach(item=>{
    const el=document.createElement('article');el.className='item';
-   const left=document.createElement('div');
+   const titleRow=document.createElement('div');titleRow.className='title-row';
+   const titleInfo=document.createElement('div');titleInfo.className='title-info';
+   const nameCode=document.createElement('div');nameCode.className='name-code';
    const nm=document.createElement('div');nm.className='name';nm.textContent=item.name;
+   const code=document.createElement('span');code.className=item.code?'nas-number':'nas-missing';code.textContent=item.code?'NASA: '+item.code:'NASA-nummer';
+   nameCode.append(nm,code);titleInfo.append(nameCode);
+   const activity=document.createElement('span');activity.className='last-activity';
+   if(Number.isFinite(Number(item.lastChangeDelta))&&item.lastChangeAt){activity.dataset.lastDelta=item.lastChangeDelta;activity.dataset.lastTime=item.lastChangeAt;activity.textContent=activityText(item.lastChangeDelta,item.lastChangeAt)}else activity.textContent='Nog geen telling geregistreerd';
+   titleInfo.append(activity);
+   const menu=document.createElement('details');menu.className='menu';
+   const menuTrigger=document.createElement('summary');menuTrigger.textContent='⋯';menuTrigger.setAttribute('aria-label','Telleropties');
+   const menuOptions=document.createElement('div');menuOptions.className='menu-options';
+   const edit=document.createElement('button');edit.type='button';edit.textContent='Bewerken';edit.onclick=()=>{menu.open=false;openModal(item.id)};
+   const del=document.createElement('button');del.type='button';del.className='delete';del.textContent='Verwijderen';del.onclick=()=>{menu.open=false;if(confirm('Deze teller verwijderen?')){items=items.filter(x=>x.id!==item.id);persist();render()}};
+   menuOptions.append(edit,del);menu.append(menuTrigger,menuOptions);titleRow.append(titleInfo,menu);
    const count=document.createElement('div');count.className='count';count.textContent=fmt(item.count);
-   left.append(nm,count);
    const actions=document.createElement('div');actions.className='item-actions';
    const minus=document.createElement('button');minus.className='minus';minus.textContent='−';minus.setAttribute('aria-label','Eén eraf');bindHold(minus,()=>change(item.id,-1));
    const plus=document.createElement('button');plus.className='add';plus.textContent='+'+(Number($('step').value)>1?fmt(Number($('step').value)):'');plus.setAttribute('aria-label','Aantal toevoegen');bindHold(plus,()=>change(item.id,Math.max(1,parseInt($('step').value)||1)));
-   actions.append(minus,plus);
-   const bottom=document.createElement('div');bottom.className='item-bottom';
-   const custom=document.createElement('input');custom.type='number';custom.min='1';custom.step='1';custom.placeholder='Aantal';custom.inputMode='numeric';custom.setAttribute('aria-label','Zelf aantal invullen');
-   const addCustom=document.createElement('button');addCustom.textContent='Tel erbij';addCustom.onclick=()=>{const n=parseInt(custom.value,10);if(Number.isInteger(n)&&n>0){change(item.id,n);custom.value=''}else custom.focus()};
-   const edit=document.createElement('button');edit.className='edit';edit.textContent='Bewerken';edit.onclick=()=>openModal(item.id);
-   const del=document.createElement('button');del.className='edit';del.textContent='Verwijderen';del.onclick=()=>{if(confirm('Deze teller verwijderen?')){items=items.filter(x=>x.id!==item.id);persist();render()}};
-   bottom.append(custom,addCustom,edit,del);
-   el.append(left,actions,bottom);list.append(el);
+   const custom=document.createElement('button');custom.className='custom-add';custom.type='button';custom.textContent='+x';custom.setAttribute('aria-label','Ander aantal bijtellen');custom.title='Ander aantal bijtellen';custom.onclick=()=>{const value=prompt('Hoeveel wil je bijtellen?');if(value===null)return;const amount=Number(value.trim());if(Number.isInteger(amount)&&amount>0)change(item.id,amount);else alert('Vul een geheel getal groter dan 0 in.')};
+   actions.append(custom,minus,plus);
+   el.append(titleRow,count,actions);list.append(el);
   });
  }
- function change(id,delta){const it=items.find(x=>x.id===id);if(!it)return;it.count=Math.max(0,it.count+delta);persist();render()}
- function openModal(id=null){editing=id;const it=items.find(x=>x.id===id);$('modalTitle').textContent=it?'Teller bewerken':'Nieuwe teller';$('crateName').value=it?it.name:'';$('modalback').classList.add('show');setTimeout(()=>$('crateName').focus(),50)}
+ function updateChecklistProgress(){$('checklistProgress').textContent=checklistState.filter(Boolean).length+'/'+CHECKLIST_ITEMS.length}
+ function renderChecklist(){const list=$('checklistItems');list.innerHTML='';CHECKLIST_ITEMS.forEach((name,index)=>{const li=document.createElement('li');const label=document.createElement('label');label.className='check-row';const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.checked=Boolean(checklistState[index]);checkbox.setAttribute('aria-label',name);const text=document.createElement('span');text.className='check-label';text.textContent=name;checkbox.addEventListener('change',()=>{checklistState[index]=checkbox.checked;persist();updateChecklistProgress()});label.append(checkbox,text);li.append(label);list.append(li)});updateChecklistProgress()}
+ function change(id,delta){const it=items.find(x=>x.id===id);if(!it)return;const previous=it.count;it.count=Math.max(0,it.count+delta);const actual=it.count-previous;if(actual!==0){it.lastChangeDelta=actual;it.lastChangeAt=Date.now()}persist();render()}
+ function openModal(id=null){editing=id;const it=items.find(x=>x.id===id);$('modalTitle').textContent=it?'Teller bewerken':'Nieuwe teller';$('crateName').value=it?it.name:'';$('crateNumber').value=it?(it.code||''):'';$('modalback').classList.add('show');setTimeout(()=>$('crateName').focus(),50)}
  $('newBtn').onclick=()=>openModal();
  $('cancelBtn').onclick=()=>$('modalback').classList.remove('show');
  $('modalback').onclick=e=>{if(e.target===$('modalback'))$('modalback').classList.remove('show')};
- $('saveBtn').onclick=()=>{const name=$('crateName').value.trim();if(!name){$('crateName').focus();return}if(editing){const it=items.find(x=>x.id===editing);if(it)it.name=name}else items.push({id:Date.now().toString()+Math.random().toString(16).slice(2),name,count:0});persist();render();$('modalback').classList.remove('show')};
+ $('saveBtn').onclick=()=>{const name=$('crateName').value.trim();if(!name){$('crateName').focus();return}const code=$('crateNumber').value.trim();if(editing){const it=items.find(x=>x.id===editing);if(it){it.name=name;it.code=code}}else items.push({id:Date.now().toString()+Math.random().toString(16).slice(2),name,code,count:0});persist();render();$('modalback').classList.remove('show')};
  $('crateName').addEventListener('keydown',e=>{if(e.key==='Enter')$('saveBtn').click()});
  $('step').addEventListener('change',()=>{let n=parseInt($('step').value,10);if(!Number.isInteger(n)||n<1)n=1;$('step').value=n;persist();render()});
- $('exportBtn').onclick=()=>{const rows=[['Kratsoort','Aantal'],...items.map(x=>[x.name,x.count]),['TOTAAL',items.reduce((s,x)=>s+x.count,0)]];const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='krattentelling.csv';a.click();URL.revokeObjectURL(url)};
- safeLoad();render();
+ $('resetBtn').onclick=()=>{if(confirm('Weet je zeker dat je alle tellers op 0 wilt zetten? De namen en NASA-nummers blijven behouden.')){items.forEach(item=>{item.count=0;delete item.lastChangeDelta;delete item.lastChangeAt});persist();render()}};
+ $('checklistBtn').onclick=()=>{const panel=$('checklistPanel');panel.hidden=!panel.hidden;$('checklistBtn').setAttribute('aria-expanded',String(!panel.hidden))};
+ $('closeChecklistBtn').onclick=()=>{$('checklistPanel').hidden=true;$('checklistBtn').setAttribute('aria-expanded','false')};
+ setInterval(()=>{document.querySelectorAll('.last-activity[data-last-time]').forEach(el=>{el.textContent=activityText(el.dataset.lastDelta,el.dataset.lastTime)})},1000);
+ document.addEventListener('click',e=>{document.querySelectorAll('.menu[open]').forEach(menu=>{if(!menu.contains(e.target))menu.open=false})});
+ $('exportBtn').onclick=()=>{const rows=[['Kratsoort','NASA-nummer','Aantal'],...items.map(x=>[x.name,x.code||'',x.count]),['TOTAAL','',items.reduce((s,x)=>s+x.count,0)]];const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='krattentelling.csv';a.click();URL.revokeObjectURL(url)};
+ safeLoad();render();renderChecklist();
 })();
 </script>
 </body>
